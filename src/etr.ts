@@ -5,8 +5,8 @@ export type EtrInputs = {
   switchingMinutes: number
   operationalZone: string
   operationalZoneMultiplier: number
-  trafficMultiplier: number
-  dayNightMultiplier: number
+  trafficLevel: TrafficLevel
+  dayPeriod: DayPeriod
   weatherTravelMultiplier: number
   repairCauseMultiplier: number
   assetDamageMultiplier: number
@@ -19,6 +19,22 @@ export type EtrInputs = {
   faultLocationConfidence: number
   uncertainty: number
   materialDelayMinutes: number
+}
+
+export type TrafficLevel = 'normal' | 'moderate' | 'high'
+export type DayPeriod = 'day' | 'night'
+
+/** Versioned ordinal coefficients. In production this configuration is
+ * recalibrated from completed outages, then approved before activation. */
+export const TRAFFIC_MULTIPLIERS: Record<TrafficLevel, number> = {
+  normal: 1.0,
+  moderate: 1.3,
+  high: 1.6,
+}
+
+export const DAY_NIGHT_MULTIPLIERS: Record<DayPeriod, number> = {
+  day: 1.0,
+  night: 2.0,
 }
 
 export function formatClock(minutes: number) {
@@ -36,7 +52,7 @@ export function formatDuration(minutes: number) {
  * Utility-owned coefficients are calibrated against actual restoration results.
  */
 export function calculateEtr(input: EtrInputs) {
-  const travelMinutes = Math.round(input.baseTravelMinutes * input.operationalZoneMultiplier * input.trafficMultiplier * input.dayNightMultiplier * input.weatherTravelMultiplier)
+  const travelMinutes = Math.round(input.baseTravelMinutes * input.operationalZoneMultiplier * TRAFFIC_MULTIPLIERS[input.trafficLevel] * DAY_NIGHT_MULTIPLIERS[input.dayPeriod] * input.weatherTravelMultiplier)
   const repairMinutes = Math.round(input.baseRepairMinutes * input.repairCauseMultiplier * input.assetDamageMultiplier * input.weatherRepairMultiplier * input.accessMultiplier * input.crewAvailabilityMultiplier * input.incidentEscalationMultiplier)
   const p50Minutes = Math.max(0, input.dispatchDelayMinutes + travelMinutes + repairMinutes + input.switchingMinutes - input.backfeedCreditMinutes)
   const confidencePenalty = 1 + (1 - input.faultLocationConfidence) * .35
