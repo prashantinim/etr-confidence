@@ -7,6 +7,7 @@ import './calculation.css'
 import './operations.css'
 import './faq.css'
 import './coefficients.css'
+import './sidebar.css'
 
 type View = 'incidents'|'performance'|'watch'|'health'|'faq'
 type Incident = { id:string; area:string; customers:number; cause:string; confidence:'High'|'Medium'|'Low'; status:string; oms:string; inputs:EtrInputs }
